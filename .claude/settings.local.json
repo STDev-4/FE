@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls c:/Users/admin/Desktop/MyAsset/*.json c:/Users/admin/Desktop/MyAsset/tsconfig*)",
+      "Bash(npm run *)"
+    ]
+  }
+}
