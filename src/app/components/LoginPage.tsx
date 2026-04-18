@@ -13,14 +13,9 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center max-w-[480px] mx-auto px-6">
-      <div className="mt-20 mb-6">
-        <h1 className="text-[#00D26A] text-[28px] text-center">MyAsset</h1>
+      <div className="mt-20 mb-12 flex justify-center">
+        <img src="/images/logo.png" alt="MyAsset Logo" className="w-[180px] object-contain" />
       </div>
-
-      <div className="text-center mb-2">
-        <span className="text-[60px]">👋</span>
-      </div>
-      <h2 className="text-[24px] text-[#1A1A2E] text-center mb-8">다시 오셨군요!</h2>
 
       <div className="w-full flex flex-col gap-4">
         <div className="relative">
