@@ -119,7 +119,7 @@ export default function AnalysisPage() {
               <button key={c.name} className="w-full flex items-center justify-between group">
                 <div className="flex items-center gap-2.5">
                   <span className="text-[11px] text-[#C7C7CC] w-4 text-right shrink-0 font-medium">{i + 1}</span>
-                  <span className="text-[14px] text-[#1A1A2E] font-medium">{c.emoji} {c.name}</span>
+                  <span className="text-[14px] text-[#1A1A2E] font-medium">{c.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   {/* Mini bar */}

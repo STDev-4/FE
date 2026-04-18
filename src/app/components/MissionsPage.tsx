@@ -40,7 +40,7 @@ function useCountdownToMidnight() {
     const update = () => {
       const now = new Date();
       const target = new Date(now);
-      target.setHours(8, 0, 0, 0);
+      target.setHours(5, 0, 0, 0);
       if (target <= now) target.setDate(target.getDate() + 1);
       const diff = target.getTime() - now.getTime();
       const h = Math.floor(diff / 3600000);
@@ -68,20 +68,20 @@ function StatusBadge({ status }: { status: MissionStatus }) {
   switch (status) {
     case "completed":
       return (
-        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#00D26A] bg-[#EDFAF4] px-2.5 py-1 rounded-full">
-          <CheckCircle2 size={11} strokeWidth={2.5} /> 성공
+        <span className="flex items-center gap-1 text-[13px] font-semibold text-[#00D26A] bg-[#EDFAF4] px-3 py-1 rounded-full">
+          <CheckCircle2 size={13} strokeWidth={2.5} /> 성공
         </span>
       );
     case "failed":
       return (
-        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#EF4444] bg-[#FEF2F2] px-2.5 py-1 rounded-full">
-          <XCircle size={11} strokeWidth={2.5} /> 실패
+        <span className="flex items-center gap-1 text-[13px] font-semibold text-[#EF4444] bg-[#FEF2F2] px-3 py-1 rounded-full">
+          <XCircle size={13} strokeWidth={2.5} /> 실패
         </span>
       );
     case "in-progress":
       return (
-        <span className="flex items-center gap-1 text-[11px] font-semibold text-[#3B82F6] bg-[#EFF6FF] px-2.5 py-1 rounded-full">
-          <Clock size={11} strokeWidth={2.5} /> 진행 중
+        <span className="flex items-center gap-1 text-[13px] font-semibold text-[#3B82F6] bg-[#EFF6FF] px-3 py-1 rounded-full">
+          <Clock size={13} strokeWidth={2.5} /> 진행 중
         </span>
       );
     default:
@@ -110,17 +110,11 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
         opacity: isFailed ? 0.75 : 1,
       }}
     >
-      <div className="flex items-center gap-3 flex-1 p-4 pl-3.5">
-        <div
-          className="w-12 h-12 rounded-xl flex items-center justify-center text-[28px] shrink-0"
-          style={{ backgroundColor: `${accent}18` }}
-        >
-          {mission.emoji}
-        </div>
+      <div className="flex items-center gap-3 flex-1 p-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span
-              className={`text-[15px] font-semibold ${
+              className={`text-[17px] font-semibold ${
                 isFailed ? "text-[#9CA3AF] line-through" : "text-[#1A1A2E]"
               }`}
             >
