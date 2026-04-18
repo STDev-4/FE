@@ -28,8 +28,7 @@ export default function HomePage() {
             <p className="text-[15px] text-[#1A1A2E]">
               절약력 상위{" "}
               <span
-                className="text-[22px] font-bold"
-                style={{ background: "linear-gradient(135deg, #6C5CE7, #A855F7)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
+                className="text-[22px] font-bold text-[#2E7D32]"
               >
                 43.9%
               </span>
@@ -40,7 +39,7 @@ export default function HomePage() {
         </div>
         <button
           className="w-full py-3 rounded-xl text-[14px] font-semibold"
-          style={{ background: "linear-gradient(135deg, #EFF6FF, #E0EFFE)", color: "#3B82F6" }}
+          style={{ backgroundColor: "rgba(76, 175, 80, 0.12)", color: "#2E7D32" }}
         >
           티어 분포 보기
         </button>
