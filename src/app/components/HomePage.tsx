@@ -92,20 +92,19 @@ export default function HomePage() {
           <ChevronRight size={20} className="text-[#C7C7CC]" />
         </div>
         {[
-          { rank: 1, emoji: "☕", category: "카페·음료",   amount: "127,400원", from: "#FFD700", to: "#FFA500" },
-          { rank: 2, emoji: "🍔", category: "배달·외식",   amount: "98,200원",  from: "#C0C0C0", to: "#A8A8A8" },
-          { rank: 3, emoji: "🛒", category: "온라인 쇼핑", amount: "85,600원",  from: "#CD7F32", to: "#A0522D" },
+          { rank: 1, emoji: "☕", category: "카페·음료",   amount: "127,400원" },
+          { rank: 2, emoji: "🍔", category: "배달·외식",   amount: "98,200원"  },
+          { rank: 3, emoji: "🛒", category: "온라인 쇼핑", amount: "85,600원"  },
         ].map((item) => (
           <div
             key={item.rank}
             className="flex items-center gap-3 py-3 border-t border-gray-50 first:border-t-0 first:pt-0"
           >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-[12px] font-bold text-white shrink-0"
-              style={{ background: `linear-gradient(135deg, ${item.from}, ${item.to})` }}
-            >
-              {item.rank}
-            </div>
+            <img
+              src={["/images/1st.png", "/images/2nd.png", "/images/3rd.png"][item.rank - 1]}
+              alt={`${item.rank}위`}
+              className="w-11 h-11 object-contain shrink-0"
+            />
             <div className="w-10 h-10 rounded-full bg-[#F8F8F8] flex items-center justify-center text-[20px] shrink-0">
               {item.emoji}
             </div>

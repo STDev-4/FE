@@ -2,28 +2,10 @@ import { motion, AnimatePresence } from "motion/react";
 import { useState, useRef } from "react";
 import defaultChar from "../../imports/character.png";
 import bunnyChar from "../../imports/rabbit.png";
+import { tierOrder, tierConfig, type TierId } from "../constants/tierConfig";
 
 const CHAR_IMG = [defaultChar, bunnyChar] as const;
 const CHAR_BG  = ["#E8EAF0",  "#FFF3E8"] as const;
-
-const tierOrder = ["master", "researcher", "explorer", "analyst", "sprout"] as const;
-type TierId = typeof tierOrder[number];
-
-const tierConfig: Record<TierId, {
-  icon: string;
-  image: string;
-  name: string;
-  color: string;
-  bg: string;
-  leagueName: string;
-  gradient: [string, string];
-}> = {
-  master:     { icon: "👑", image: "/images/5-League-Master.png",     name: "절약 마스터",  color: "#D97706", bg: "#FFFBEB", leagueName: "마스터 리그",  gradient: ["#FCD34D", "#F59E0B"] },
-  researcher: { icon: "🔬", image: "/images/4-League-Researcher.png", name: "절약 연구원",  color: "#F97316", bg: "#FFF7ED", leagueName: "연구원 리그",  gradient: ["#FB923C", "#EA580C"] },
-  explorer:   { icon: "🔍", image: "/images/3-League-Explorer.png",   name: "소비 탐험가",  color: "#A855F7", bg: "#FAF5FF", leagueName: "탐험가 리그",  gradient: ["#C084FC", "#9333EA"] },
-  analyst:    { icon: "📊", image: "/images/2-League-Analyst.png",    name: "분석 입문자",  color: "#3B82F6", bg: "#EFF6FF", leagueName: "분석가 리그",  gradient: ["#60A5FA", "#2563EB"] },
-  sprout:     { icon: "🌱", image: "/images/1-League-Seedling.png",   name: "새싹 절약러",  color: "#10B981", bg: "#ECFDF5", leagueName: "새싹 리그",    gradient: ["#34D399", "#059669"] },
-};
 
 interface LeagueUser {
   rank: number;
@@ -245,7 +227,7 @@ export default function TierPage() {
                 {/* Rank */}
                 <div className="w-8 flex items-center justify-center shrink-0">
                   {medal ? (
-                    <img src={medal} alt={`${user.rank}위`} className="h-11 w-auto object-contain" />
+                    <img src={medal} alt={`${user.rank}위`} className="w-11 h-11 object-contain shrink-0" />
                   ) : (
                     <span className="text-[14px] font-bold text-[#8E8E93] -ml-2">{user.rank}</span>
                   )}
