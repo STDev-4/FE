@@ -21,8 +21,11 @@ export default function HomePage() {
       {/* Saving Rank Card */}
       <div className="mx-4 mt-4 rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] p-5">
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#FFF8E1] to-[#FFF3CD] flex items-center justify-center text-[26px] shadow-sm">
-            🏆
+          <div 
+            className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm relative"
+            style={{ backgroundColor: "rgba(76, 175, 80, 0.12)" }}
+          >
+            <img src="/images/Crown.png" alt="crown" className="absolute w-[96px] h-[96px] max-w-none object-contain z-10" />
           </div>
           <div className="flex-1">
             <p className="text-[15px] text-[#1A1A2E]">
@@ -67,8 +70,8 @@ export default function HomePage() {
         </div>
 
         <div className="px-5 pb-5">
-          <div className="flex items-center gap-1.5 mb-1 mt-3">
-            <img src="/images/2-League-Analyst.png" alt="분석가 리그" className="w-4 h-4 object-contain" />
+          <div className="flex items-center gap-2 mb-1 mt-3">
+            <img src="/images/2-League-Analyst.png" alt="분석가 리그" className="w-[22px] h-[22px] object-contain shrink-0" />
             <span className="text-[12px] text-[#3B82F6] font-semibold">분석 입문자 · 1,850P</span>
             <ChevronRight size={14} className="text-[#C7C7CC]" />
           </div>

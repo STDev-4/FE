@@ -5,12 +5,12 @@ import { ChevronDown, ChevronUp, Zap, Sliders, Shield, Bell, Star } from "lucide
 import { motion, AnimatePresence } from "motion/react";
 
 const categories = [
-  { name: "카페",      emoji: "☕", pct: 32.4, amount: 52700,  color: "#FF6B6B" },
-  { name: "배달·외식", emoji: "🍔", pct: 28.3, amount: 46000,  color: "#A855F7" },
+  { name: "카페", emoji: "☕", pct: 32.4, amount: 52700, color: "#FF6B6B" },
+  { name: "배달·외식", emoji: "🍔", pct: 28.3, amount: 46000, color: "#A855F7" },
   { name: "온라인 쇼핑", emoji: "🛒", pct: 17.0, amount: 27600, color: "#3B82F6" },
-  { name: "교통",      emoji: "🚗", pct: 12.1, amount: 19700,  color: "#F59E0B" },
-  { name: "여가",      emoji: "🎮", pct:  6.2, amount: 10100,  color: "#10B981" },
-  { name: "기타",      emoji: "📦", pct:  4.0, amount:  6500,  color: "#C7C7CC" },
+  { name: "교통", emoji: "🚗", pct: 12.1, amount: 19700, color: "#F59E0B" },
+  { name: "여가", emoji: "🎮", pct: 6.2, amount: 10100, color: "#10B981" },
+  { name: "기타", emoji: "📦", pct: 4.0, amount: 6500, color: "#C7C7CC" },
 ];
 
 const insights = [
@@ -235,10 +235,15 @@ export default function AnalysisPage() {
 
             <div className="flex items-center gap-2 mb-4">
               <span className="inline-flex items-center gap-1 bg-white px-3 py-1.5 rounded-full text-[12px] font-bold text-[#00A854] shadow-sm">
-                💰 약 24,000원 절약
+                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                  <img src="/images/Money.png" alt="money" className="absolute w-[40px] h-[40px] max-w-none object-contain z-10" />
+                </div>
+                약 24,000원 절약
               </span>
               <span className="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full text-[12px] font-bold text-[#7C3AED] shadow-sm">
-                <Star size={11} fill="#7C3AED" className="text-[#7C3AED]" />
+                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
+                  <img src="/images/Experience.png" alt="experience" className="absolute w-[58px] h-[58px] max-w-none object-contain z-10" />
+                </div>
                 30P
               </span>
             </div>
