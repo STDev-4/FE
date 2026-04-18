@@ -107,9 +107,7 @@ export default function HomePage() {
               alt={`${item.rank}위`}
               className="w-11 h-11 object-contain shrink-0"
             />
-            <div className="w-10 h-10 rounded-full bg-[#F8F8F8] flex items-center justify-center text-[20px] shrink-0">
-              {item.emoji}
-            </div>
+
             <div className="flex-1">
               <p className="text-[15px] font-medium text-[#1A1A2E]">{item.category}</p>
             </div>

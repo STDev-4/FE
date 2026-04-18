@@ -117,13 +117,7 @@ export default function MissionDetailPage() {
           <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
           <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/8" />
 
-          <motion.span
-            className="text-[60px] mb-3 relative z-10"
-            animate={{ rotate: [0, -5, 5, 0] }}
-            transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
-          >
-            {mission.emoji}
-          </motion.span>
+
           <h3 className="text-[22px] font-bold text-white mb-2 relative z-10">{mission.title}</h3>
           <p className="text-[14px] text-white/80 leading-relaxed relative z-10">{mission.description}</p>
 
@@ -198,7 +192,7 @@ export default function MissionDetailPage() {
             className="w-full py-4 rounded-2xl text-white text-[16px] font-bold shadow-[0_4px_16px_rgba(0,210,106,0.35)]"
             style={{ background: "linear-gradient(135deg, #00D26A, #00A854)" }}
           >
-            🎯 미션 시작하기
+            미션 시작하기
           </motion.button>
         )}
       </div>

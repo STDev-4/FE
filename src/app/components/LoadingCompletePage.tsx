@@ -8,19 +8,19 @@ export default function LoadingCompletePage() {
   const [phase, setPhase] = useState<"loading" | "complete">("loading");
 
   useEffect(() => {
-    const timer = setTimeout(() => setPhase("complete"), 3000);
+    const timer = setTimeout(() => setPhase("complete"), 1000);
     return () => clearTimeout(timer);
   }, []);
 
+  useEffect(() => {
+    if (phase !== "complete") return;
+    const timer = setTimeout(() => navigate("/app"), 3000);
+    return () => clearTimeout(timer);
+  }, [phase, navigate]);
+
   return (
     <div className="min-h-screen bg-white flex flex-col max-w-[480px] mx-auto">
-      <div className="px-6 mt-6">
-        <div className="h-[3px] bg-gray-200 rounded-full">
-          <div className="h-full w-full bg-[#00D26A] rounded-full" />
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+<div className="flex-1 flex flex-col items-center justify-center px-6">
         <AnimatePresence mode="wait">
           {phase === "loading" ? (
             <motion.div
@@ -47,8 +47,8 @@ export default function LoadingCompletePage() {
                   ))}
                 </div>
               </div>
-              <h2 className="text-[20px] text-[#1A1A2E] mb-2">소비 데이터를 불러오고 있어요...</h2>
-              <p className="text-[14px] text-[#8E8E93]">AI가 지난 2개월간의 소비 패턴을 분석 중이에요</p>
+              <h2 className="text-[20px] text-[#1A1A2E] mb-2">소비 내역을 불러오고 있어요...</h2>
+              <p className="text-[14px] text-[#8E8E93]">AI가 소비 패턴을 분석 중이에요</p>
             </motion.div>
           ) : (
             <motion.div
@@ -75,20 +75,6 @@ export default function LoadingCompletePage() {
         </AnimatePresence>
       </div>
 
-      {phase === "complete" && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="px-6 pb-8"
-        >
-          <button
-            onClick={() => navigate("/app")}
-            className="w-full h-[52px] bg-[#00D26A] text-white rounded-xl text-[16px] hover:bg-[#00b85c] transition-colors"
-          >
-            내 결과 확인하기
-          </button>
-        </motion.div>
-      )}
     </div>
   );
 }

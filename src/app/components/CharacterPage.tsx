@@ -4,6 +4,7 @@ import bunnyChar from "../../imports/rabbit.png";
 import { useState } from "react";
 import { Coins, ChevronRight, CheckCircle2, Lock } from "lucide-react";
 import { useNavigate } from "react-router";
+import { tierConfig, type TierId } from "../constants/tierConfig";
 
 const characters = [
   {
@@ -18,7 +19,7 @@ const characters = [
   {
     id: 2,
     name: "행운 토끼",
-    desc: "코인으로 해금 가능",
+    desc: "콩으로 해금 가능",
     img: bunnyChar,
     price: 300,
     bgColor: "#FFF3E8",
@@ -28,6 +29,8 @@ const characters = [
 
 export default function CharacterPage() {
   const navigate = useNavigate();
+  const currentTierId: TierId = "analyst";
+  const tier = tierConfig[currentTierId];
 
   const [coins, setCoins] = useState(340);
   const [ownedIds, setOwnedIds] = useState<number[]>([1]);
@@ -51,7 +54,7 @@ export default function CharacterPage() {
   }
 
   const ctaLabel = () => {
-    if (!isOwned) return canAfford ? `${selectedChar.price}코인으로 해금하기` : "코인이 부족해요";
+    if (!isOwned) return canAfford ? `${selectedChar.price}콩으로 해금하기` : "콩이 부족해요";
     if (isSameAsActive) return "현재 사용 중인 캐릭터";
     return "이 캐릭터로 변경하기";
   };
@@ -80,8 +83,8 @@ export default function CharacterPage() {
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[16px]">📊</span>
-              <span className="text-[16px] font-bold text-[#1D4ED8]">분석 입문자</span>
+              <img src={tier.image} alt={tier.name} className="w-6 h-6 object-contain" />
+              <span className="text-[16px] font-bold" style={{ color: tier.color }}>{tier.name}</span>
             </div>
             <p className="text-[13px] text-[#3B82F6] font-medium">1,850P · 다음 티어까지 1,150P</p>
           </div>
@@ -130,8 +133,9 @@ export default function CharacterPage() {
         </AnimatePresence>
 
         <p className="text-[18px] font-bold text-[#1A1A2E] mt-4">{activeChar.name}</p>
-        <span className="text-[12px] font-semibold bg-[#EFF6FF] text-[#3B82F6] px-3 py-1.5 rounded-full mt-2">
-          📊 분석 입문자 · 1,850P
+        <span className="text-[12px] font-semibold px-3 py-1.5 rounded-full mt-2 flex items-center gap-1.5" style={{ backgroundColor: tier.bg, color: tier.color }}>
+          <img src={tier.image} alt={tier.name} className="w-4 h-4 object-contain" />
+          {tier.name} · 1,850P
         </span>
       </div>
 
@@ -146,7 +150,7 @@ export default function CharacterPage() {
               <Coins size={18} className="text-[#F59E0B]" />
             </div>
             <div>
-              <p className="text-[11px] text-[#8E8E93] font-medium">보유 코인</p>
+              <p className="text-[11px] text-[#8E8E93] font-medium">보유 콩</p>
               <p className="text-[17px] font-bold text-[#1A1A2E] leading-tight">{coins}</p>
             </div>
           </div>
@@ -154,7 +158,7 @@ export default function CharacterPage() {
             className="text-[12px] font-semibold px-3 py-1.5 rounded-full"
             style={{ background: "linear-gradient(135deg, #FEF3C7, #FDE68A)", color: "#B45309" }}
           >
-            코인 충전하기
+            콩 충전하기
           </span>
         </div>
       </div>
