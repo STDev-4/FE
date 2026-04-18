@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import { ChevronDown, ChevronUp, Zap, Sliders, Shield, Bell, Star } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
@@ -69,11 +68,10 @@ const insights = [
 ];
 
 export default function AnalysisPage() {
-  const navigate = useNavigate();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   return (
-    <div className="pb-28 bg-[#F5F5F5] min-h-full">
+    <div className="pb-4 bg-[#F5F5F5] min-h-full">
       {/* Header */}
       <div className="px-5 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
         <h2 className="text-[18px] font-semibold text-[#1A1A2E] text-center">분석</h2>
@@ -206,70 +204,6 @@ export default function AnalysisPage() {
               </div>
             );
           })}
-        </div>
-      </div>
-
-      {/* ══ Section 3: 추천 미션 ══ */}
-      <div className="px-4 pt-7 pb-2">
-        <div className="mb-4">
-          <h3 className="text-[17px] font-bold text-[#1A1A2E]">심리학 기반 절약 미션</h3>
-          <p className="text-[13px] text-[#8E8E93] mt-1 font-medium">분석된 소비 패턴 맞춤 추천</p>
-        </div>
-
-        <div
-          className="rounded-2xl overflow-hidden shadow-[0_4px_16px_rgba(0,168,84,0.2)]"
-          style={{ background: "linear-gradient(135deg, #F0FDF4, #DCFCE7)" }}
-        >
-          <div className="p-5">
-            <div className="flex items-start gap-3 mb-4">
-              <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-[26px] shrink-0 shadow-sm">
-                🍔
-              </div>
-              <div>
-                <p className="text-[15px] font-bold text-[#1A1A2E] leading-snug">오늘 배달 금지</p>
-                <p className="text-[13px] text-[#4B5563] mt-0.5 leading-relaxed">
-                  직접 요리하거나 미리 준비한 식사로 대체해보세요
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 mb-4">
-              <span className="inline-flex items-center gap-1 bg-white px-3 py-1.5 rounded-full text-[12px] font-bold text-[#00A854] shadow-sm">
-                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-                  <img src="/images/Money.png" alt="money" className="absolute w-[40px] h-[40px] max-w-none object-contain z-10" />
-                </div>
-                약 24,000원 절약
-              </span>
-              <span className="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full text-[12px] font-bold text-[#7C3AED] shadow-sm">
-                <div className="relative w-4 h-4 flex items-center justify-center shrink-0">
-                  <img src="/images/Experience.png" alt="experience" className="absolute w-[58px] h-[58px] max-w-none object-contain z-10" />
-                </div>
-                30P
-              </span>
-            </div>
-
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={() =>
-                navigate("/app/missions", {
-                  state: {
-                    addMission: {
-                      id: "delivery-ban",
-                      title: "오늘 배달 금지",
-                      emoji: "🍔",
-                      reward: 30,
-                      status: "in-progress",
-                      tierNote: "약 24,000원 절약 가능",
-                    },
-                  },
-                })
-              }
-              className="w-full py-3.5 rounded-xl text-[15px] font-bold text-white shadow-[0_4px_12px_rgba(0,168,84,0.3)]"
-              style={{ background: "linear-gradient(135deg, #00D26A, #00A854)" }}
-            >
-              이 미션 선택하기
-            </motion.button>
-          </div>
         </div>
       </div>
     </div>
