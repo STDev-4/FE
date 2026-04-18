@@ -11,17 +11,18 @@ type TierId = typeof tierOrder[number];
 
 const tierConfig: Record<TierId, {
   icon: string;
+  image: string;
   name: string;
   color: string;
   bg: string;
   leagueName: string;
   gradient: [string, string];
 }> = {
-  master:     { icon: "👑", name: "절약 마스터",  color: "#D97706", bg: "#FFFBEB", leagueName: "마스터 리그",  gradient: ["#FCD34D", "#F59E0B"] },
-  researcher: { icon: "🔬", name: "절약 연구원",  color: "#F97316", bg: "#FFF7ED", leagueName: "연구원 리그",  gradient: ["#FB923C", "#EA580C"] },
-  explorer:   { icon: "🔍", name: "소비 탐험가",  color: "#A855F7", bg: "#FAF5FF", leagueName: "탐험가 리그",  gradient: ["#C084FC", "#9333EA"] },
-  analyst:    { icon: "📊", name: "분석 입문자",  color: "#3B82F6", bg: "#EFF6FF", leagueName: "분석가 리그",  gradient: ["#60A5FA", "#2563EB"] },
-  sprout:     { icon: "🌱", name: "새싹 절약러",  color: "#10B981", bg: "#ECFDF5", leagueName: "새싹 리그",    gradient: ["#34D399", "#059669"] },
+  master:     { icon: "👑", image: "/images/5-League-Master.png",     name: "절약 마스터",  color: "#D97706", bg: "#FFFBEB", leagueName: "마스터 리그",  gradient: ["#FCD34D", "#F59E0B"] },
+  researcher: { icon: "🔬", image: "/images/4-League-Researcher.png", name: "절약 연구원",  color: "#F97316", bg: "#FFF7ED", leagueName: "연구원 리그",  gradient: ["#FB923C", "#EA580C"] },
+  explorer:   { icon: "🔍", image: "/images/3-League-Explorer.png",   name: "소비 탐험가",  color: "#A855F7", bg: "#FAF5FF", leagueName: "탐험가 리그",  gradient: ["#C084FC", "#9333EA"] },
+  analyst:    { icon: "📊", image: "/images/2-League-Analyst.png",    name: "분석 입문자",  color: "#3B82F6", bg: "#EFF6FF", leagueName: "분석가 리그",  gradient: ["#60A5FA", "#2563EB"] },
+  sprout:     { icon: "🌱", image: "/images/1-League-Seedling.png",   name: "새싹 절약러",  color: "#10B981", bg: "#ECFDF5", leagueName: "새싹 리그",    gradient: ["#34D399", "#059669"] },
 };
 
 interface LeagueUser {
@@ -81,22 +82,16 @@ function ShieldBadge({ tierId, isSelected, onClick }: {
       }}
       transition={{ type: "spring", stiffness: 360, damping: 28 }}
     >
-      <div
-        className="flex items-center justify-center"
+      <img
+        src={tier.image}
+        alt={tier.leagueName}
         style={{
-          width: 58,
-          height: 66,
-          background: isSelected
-            ? `linear-gradient(150deg, ${tier.gradient[0]}, ${tier.gradient[1]})`
-            : "#C7C7CC",
-          clipPath: "polygon(0% 0%, 100% 0%, 100% 65%, 50% 100%, 0% 65%)",
-          filter: isSelected
-            ? `drop-shadow(0 6px 12px ${tier.gradient[1]}66)`
-            : "none",
+          width: 64,
+          height: 64,
+          objectFit: "contain",
+          filter: isSelected ? `drop-shadow(0 6px 12px ${tier.gradient[1]}88)` : "none",
         }}
-      >
-        <span style={{ fontSize: isSelected ? 26 : 22 }}>{tier.icon}</span>
-      </div>
+      />
     </motion.button>
   );
 }
@@ -156,9 +151,6 @@ export default function TierPage() {
             className="text-center px-4"
           >
             <h3 className="text-[20px] font-bold text-[#1A1A2E]">{tier.leagueName}</h3>
-            <p className="text-[13px] mt-1 font-medium" style={{ color: tier.color }}>
-              남은 시간: 2일 14시간 32분
-            </p>
           </motion.div>
         </AnimatePresence>
 
