@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Calendar } from "lucide-react";
+import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Calendar, Hash } from "lucide-react";
 
 export default function SignUpPage() {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
-  const [form, setForm] = useState({ email: "", password: "", passwordConfirm: "", nickname: "", birth: "" });
+  const [form, setForm] = useState({ loginId: "", email: "", password: "", passwordConfirm: "", nickname: "", birth: "" });
 
-  const isValid = form.email && form.password.length >= 8 && form.password === form.passwordConfirm && form.nickname && form.birth;
+  const isValid = form.loginId && form.email && form.password.length >= 8 && form.password === form.passwordConfirm && form.nickname && form.birth;
 
   const update = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
 
@@ -35,11 +35,12 @@ export default function SignUpPage() {
 
         <div className="flex flex-col gap-4 mt-8">
           {[
-            { key: "email", icon: Mail, placeholder: "이메일 주소", type: "email" },
+            { key: "loginId", icon: Hash, placeholder: "아이디", type: "text" },
             { key: "password", icon: Lock, placeholder: "비밀번호 (8자 이상)", type: showPw ? "text" : "password", hasEye: true },
             { key: "passwordConfirm", icon: Lock, placeholder: "비밀번호 확인", type: "password" },
-            { key: "nickname", icon: User, placeholder: "닉네임", type: "text" },
+            { key: "email", icon: Mail, placeholder: "이메일 주소", type: "email" },
             { key: "birth", icon: Calendar, placeholder: "생년월일 (YYYY.MM.DD)", type: "text" },
+            { key: "nickname", icon: User, placeholder: "닉네임", type: "text" },
           ].map((f) => (
             <div key={f.key} className="relative">
               <f.icon size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#8E8E93]" />
