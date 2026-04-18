@@ -31,26 +31,24 @@ export default function LoadingCompletePage() {
               className="flex flex-col items-center text-center"
             >
               <div className="w-[200px] h-[200px] flex items-center justify-center mb-8">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-                  className="text-[80px]"
-                >
-                  🔍
-                </motion.div>
+                <div className="relative w-16 h-16">
+                  {[...Array(8)].map((_, i) => (
+                    <motion.div
+                      key={i}
+                      className="absolute w-[10px] h-[10px] rounded-full bg-[#00D26A]"
+                      style={{
+                        left: `calc(50% + ${Math.cos((i * Math.PI * 2) / 8) * 24}px)`,
+                        top: `calc(50% + ${Math.sin((i * Math.PI * 2) / 8) * 24}px)`,
+                        transform: "translate(-50%, -50%)"
+                      }}
+                      animate={{ scale: [0.6, 1.2, 0.6], opacity: [0.3, 1, 0.3] }}
+                      transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.15, ease: "easeInOut" }}
+                    />
+                  ))}
+                </div>
               </div>
               <h2 className="text-[20px] text-[#1A1A2E] mb-2">소비 데이터를 불러오고 있어요...</h2>
               <p className="text-[14px] text-[#8E8E93]">AI가 지난 2개월간의 소비 패턴을 분석 중이에요</p>
-              <div className="flex gap-1.5 mt-6">
-                {[0, 1, 2].map((i) => (
-                  <motion.div
-                    key={i}
-                    className="w-2.5 h-2.5 rounded-full bg-[#00D26A]"
-                    animate={{ opacity: [0.3, 1, 0.3] }}
-                    transition={{ repeat: Infinity, duration: 1.2, delay: i * 0.3 }}
-                  />
-                ))}
-              </div>
             </motion.div>
           ) : (
             <motion.div
@@ -61,18 +59,6 @@ export default function LoadingCompletePage() {
             >
               {/* Sparkles */}
               <div className="relative mb-8">
-                {[...Array(8)].map((_, i) => (
-                  <motion.div
-                    key={i}
-                    className="absolute w-2 h-2 rounded-full bg-[#00D26A]/40"
-                    style={{
-                      left: `${50 + 50 * Math.cos((i * Math.PI * 2) / 8)}%`,
-                      top: `${50 + 50 * Math.sin((i * Math.PI * 2) / 8)}%`,
-                    }}
-                    animate={{ scale: [0, 1.5, 0], opacity: [0, 1, 0] }}
-                    transition={{ repeat: Infinity, duration: 2, delay: i * 0.2 }}
-                  />
-                ))}
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
