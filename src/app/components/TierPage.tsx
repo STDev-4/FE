@@ -59,7 +59,7 @@ function ShieldBadge({ tierId, isSelected, onClick }: {
       onClick={onClick}
       className="flex flex-col items-center gap-1.5"
       animate={{
-        scale: isSelected ? 1.15 : 0.72,
+        scale: isSelected ? 1.4 : 0.6,
         opacity: isSelected ? 1 : 0.45,
       }}
       transition={{ type: "spring", stiffness: 360, damping: 28 }}
@@ -68,8 +68,8 @@ function ShieldBadge({ tierId, isSelected, onClick }: {
         src={tier.image}
         alt={tier.leagueName}
         style={{
-          width: 64,
-          height: 64,
+          width: 77,
+          height: 77,
           objectFit: "contain",
           filter: isSelected ? `drop-shadow(0 6px 12px ${tier.gradient[1]}88)` : "none",
         }}
@@ -225,9 +225,9 @@ export default function TierPage() {
                 }}
               >
                 {/* Rank */}
-                <div className="w-8 flex items-center justify-center shrink-0">
+                <div className="w-14 flex items-center justify-center shrink-0">
                   {medal ? (
-                    <img src={medal} alt={`${user.rank}위`} className="w-11 h-11 object-contain shrink-0" />
+                    <img src={medal} alt={`${user.rank}위`} className="w-14 h-14 object-contain shrink-0" />
                   ) : (
                     <span className="text-[14px] font-bold text-[#8E8E93] -ml-2">{user.rank}</span>
                   )}
