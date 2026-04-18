@@ -64,7 +64,7 @@ const allUsers: LeagueUser[] = [
   { rank: 3, name: "오절약",   points:  320, tierId: "sprout",     charType: 0, timeAgo: "2일 전"   },
 ];
 
-const medals: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
+const medals: Record<number, string> = { 1: "/images/1st.png", 2: "/images/2nd.png", 3: "/images/3rd.png" };
 
 function ShieldBadge({ tierId, isSelected, onClick }: {
   tierId: TierId;
@@ -245,9 +245,9 @@ export default function TierPage() {
                 {/* Rank */}
                 <div className="w-8 flex items-center justify-center shrink-0">
                   {medal ? (
-                    <span className="text-[20px] leading-none">{medal}</span>
+                    <img src={medal} alt={`${user.rank}위`} className="h-11 w-auto object-contain" />
                   ) : (
-                    <span className="text-[14px] font-bold text-[#8E8E93]">{user.rank}</span>
+                    <span className="text-[14px] font-bold text-[#8E8E93] -ml-2">{user.rank}</span>
                   )}
                 </div>
 
