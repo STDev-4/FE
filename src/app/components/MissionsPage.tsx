@@ -38,9 +38,10 @@ function useCountdownToMidnight() {
   useEffect(() => {
     const update = () => {
       const now = new Date();
-      const midnight = new Date(now);
-      midnight.setHours(24, 0, 0, 0);
-      const diff = midnight.getTime() - now.getTime();
+      const target = new Date(now);
+      target.setHours(8, 0, 0, 0);
+      if (target <= now) target.setDate(target.getDate() + 1);
+      const diff = target.getTime() - now.getTime();
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
@@ -182,8 +183,9 @@ export default function MissionsPage() {
         <div className="p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                📊 분석 입문자
+              <span className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
+                <img src="/images/2-League-Analyst.png" alt="분석가 리그" className="w-5 h-5 object-contain" />
+                분석 입문자
               </span>
             </div>
             <p className="text-white/75 text-[13px] mt-1">오늘의 미션 현황</p>
@@ -238,7 +240,7 @@ export default function MissionsPage() {
 
       {/* Today Missions */}
       <div className="mx-4 mb-3">
-        <p className="text-[16px] font-bold text-[#1A1A2E]">🎯 오늘의 미션</p>
+        <p className="text-[16px] font-bold text-[#1A1A2E]">오늘의 미션</p>
         <p className="text-[12px] text-[#8E8E93] mt-0.5 font-medium">미션을 완료해 포인트를 모으세요</p>
       </div>
       <div className="mx-4 flex flex-col gap-3">
