@@ -1,100 +1,188 @@
-import { useParams, useNavigate } from "react-router";
+import { useLocation, useParams, useNavigate } from "react-router";
 import { ArrowLeft, Brain, Calculator } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
+import { missionsApi } from "../lib/services";
+import type { MissionDetailResponse, RecommendedMissionResponse } from "../lib/types";
+import { ApiError } from "../lib/api";
 
-interface MissionDetail {
-  id: string;
+const ICON_EMOJI: Record<string, string> = {
+  CAFE: "☕",
+  COFFEE: "☕",
+  DELIVERY: "🍔",
+  FOOD: "🍱",
+  SHOPPING: "🛍️",
+  CONVENIENCE: "🏪",
+  TRANSPORT: "🚌",
+  LEISURE: "🎬",
+  BEAUTY: "💄",
+  DEFAULT: "🎯",
+};
+const iconEmoji = (type?: string) => (type && ICON_EMOJI[type.toUpperCase()]) || ICON_EMOJI.DEFAULT;
+
+// Detail payload can come from either /api/missions/{id} or from a recommendation being previewed.
+type DetailView = {
   title: string;
-  emoji: string;
   description: string;
-  whyTitle: string;
-  whyLines: string[];
-  mathTitle: string;
-  mathLines: string[];
-}
-
-const missionData: Record<string, MissionDetail> = {
-  s1: {
-    id: "s1",
-    title: "오늘 카페 안 가기",
-    emoji: "☕",
-    description: "하루 동안 카페 지출 0원 달성하기. 집에서 커피 내려 마시면 승리!",
-    whyTitle: "행동학에서는..",
-    whyLines: [
-      "반복적인 소액 소비는 체감이 적어 통제하기 어렵습니다.",
-      "이 미션은 자동적 소비 반응을 줄이고 충동성을 낮추는 데 도움을 줍니다.",
-      "행동경제학에서 '현상 유지 편향'을 깨는 첫 걸음입니다.",
-    ],
-    mathTitle: "더 자세히 알아볼까요?",
-    mathLines: [
-      "카페 소비가 줄어들면 특정 항목에 집중된 지출 비율이 낮아집니다.",
-      "즉, 소비 편중도가 완화됩니다.",
-      "현재 카페 비중 32.4% → 목표 25% 이하로 정상화.",
-    ],
-  },
-  s2: {
-    id: "s2",
-    title: "배달 1회 줄이기",
-    emoji: "🍕",
-    description: "오늘 배달 앱 주문을 어제보다 1회 줄이기. 직접 해먹으면 보너스!",
-    whyTitle: "행동학에서는..",
-    whyLines: [
-      "배달 앱은 '선택 과부하'를 유발하여 무의식적 주문을 촉진합니다.",
-      "한 번의 절제가 자기 효능감을 높이고, 다음 절제를 쉽게 만듭니다.",
-      "심리학에서 말하는 '작은 승리(small wins)' 효과입니다.",
-    ],
-    mathTitle: "더 자세히 알아볼까요?",
-    mathLines: [
-      "배달 1회 평균 비용 15,200원 기준, 월 30회 → 29회로 줄이면",
-      "월 15,200원, 연 182,400원 절약 가능.",
-      "배달·외식 비중 28.3% → 약 26.5%로 감소 효과.",
-    ],
-  },
-  b1: {
-    id: "b1",
-    title: "교통비 절약",
-    emoji: "🚶",
-    description: "2정거장 이내 거리는 걸어서 이동하기. 건강도 챙기고 돈도 아끼자!",
-    whyTitle: "행동학에서는..",
-    whyLines: [
-      "짧은 거리 택시/버스 이용은 '편의 중독' 패턴의 시작입니다.",
-      "걷기는 도파민 분비를 촉진하여 충동 소비 욕구를 줄여줍니다.",
-      "신체 활동이 전두엽 기능을 활성화시켜 합리적 판단을 돕습니다.",
-    ],
-    mathTitle: "더 자세히 알아볼까요?",
-    mathLines: [
-      "2정거장 버스비 1,400원 × 주 5회 = 주 7,000원 절약.",
-      "월 28,000원, 연 336,000원의 숨은 절약 효과.",
-      "교통 비중 12.1% → 약 10.4%로 감소.",
-    ],
-  },
-  b2: {
-    id: "b2",
-    title: "충동구매 방지",
-    emoji: "🛡️",
-    description: "장바구니에 담은 상품, 24시간 후에 다시 확인하기. 진짜 필요한 것만 남긴다!",
-    whyTitle: "행동학에서는..",
-    whyLines: [
-      "충동구매의 88%는 24시간 후 후회한다는 연구 결과가 있습니다.",
-      "'쿨링 오프' 시간을 두면 감정적 구매가 이성적 판단으로 전환됩니다.",
-      "이 미션은 '지연 할인(delay discounting)' 능력을 훈련합니다.",
-    ],
-    mathTitle: "더 자세히 알아볼까요?",
-    mathLines: [
-      "충동구매 평균 단가 32,000원, 월 3회 발생 시 96,000원.",
-      "24시간 지연 규칙 적용 시 약 70% 취소 → 월 67,200원 절약.",
-      "온라인 쇼핑 비중 17.0% → 약 12.8%로 대폭 감소.",
-    ],
-  },
+  iconType: string;
+  rewardPoint: number;
+  failPenaltyPoint: number;
+  expectedSavingAmount: number;
+  status: string;
+  behaviorInsights: string[];
+  statisticalReasons: string[];
 };
 
 export default function MissionDetailPage() {
   const { id } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
-  const [started, setStarted] = useState(false);
 
-  const mission = missionData[id || "s1"] || missionData["s1"];
+  // Recommendation preview (not yet started) arrives via route state; URL has "rec-" prefix.
+  const isRecommendation = typeof id === "string" && id.startsWith("rec-");
+  const recommendation = (location.state as { recommendation?: RecommendedMissionResponse } | null)
+    ?.recommendation;
+  const recommendationId = isRecommendation
+    ? recommendation?.recommendationId ?? id!.slice(4)
+    : null;
+
+  const [detail, setDetail] = useState<DetailView | null>(null);
+  const [loading, setLoading] = useState(!isRecommendation);
+  const [error, setError] = useState<string | null>(null);
+  const [starting, setStarting] = useState(false);
+
+  useEffect(() => {
+    // Recommendation case: hydrate from route state; if missing (refresh, deep link),
+    // refetch the recommendations list and find by id.
+    if (isRecommendation) {
+      const hydrate = (r: RecommendedMissionResponse) =>
+        setDetail({
+          title: r.title,
+          description: r.description,
+          iconType: r.iconType,
+          rewardPoint: r.rewardPoint,
+          failPenaltyPoint: r.failPenaltyPoint,
+          expectedSavingAmount: r.expectedSavingAmount,
+          status: "READY",
+          behaviorInsights: [],
+          statisticalReasons: [],
+        });
+
+      if (recommendation) {
+        hydrate(recommendation);
+        setLoading(false);
+        return;
+      }
+
+      let cancelled = false;
+      setLoading(true);
+      missionsApi
+        .recommended()
+        .then((list) => {
+          if (cancelled) return;
+          const found = list.find((r) => r.recommendationId === recommendationId);
+          if (found) hydrate(found);
+          else setError("추천 미션 정보를 찾을 수 없어요. 목록에서 다시 선택해 주세요.");
+        })
+        .catch((e) => {
+          if (cancelled) return;
+          setError(e instanceof ApiError ? e.message : "추천 미션을 불러오지 못했어요");
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    // Started-mission case: fetch from BE.
+    if (!id) return;
+    let cancelled = false;
+    setLoading(true);
+    missionsApi
+      .detail(id)
+      .then((res: MissionDetailResponse) => {
+        if (cancelled) return;
+        setDetail({
+          title: res.title,
+          description: res.description,
+          iconType: res.iconType,
+          rewardPoint: res.rewardPoint,
+          failPenaltyPoint: res.failPenaltyPoint,
+          expectedSavingAmount: res.expectedSavingAmount,
+          status: res.status,
+          behaviorInsights: res.behaviorInsights ?? [],
+          statisticalReasons: res.statisticalReasons ?? [],
+        });
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e instanceof ApiError ? e.message : "미션 정보를 불러오지 못했어요");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [id, isRecommendation, recommendation]);
+
+  const handleStart = async () => {
+    if (!recommendationId || starting) return;
+    setStarting(true);
+    setError(null);
+    try {
+      const started = await missionsApi.start({ recommendationId });
+      // Fetch full detail (behaviorInsights / statisticalReasons) now that a missionId exists.
+      try {
+        const full = await missionsApi.detail(started.missionId);
+        setDetail({
+          title: full.title,
+          description: full.description,
+          iconType: full.iconType,
+          rewardPoint: full.rewardPoint,
+          failPenaltyPoint: full.failPenaltyPoint,
+          expectedSavingAmount: full.expectedSavingAmount,
+          status: full.status,
+          behaviorInsights: full.behaviorInsights ?? [],
+          statisticalReasons: full.statisticalReasons ?? [],
+        });
+      } catch {
+        // Fallback: at least flip status to in-progress so the CTA changes.
+        setDetail((prev) =>
+          prev ? { ...prev, status: started.status || "IN_PROGRESS" } : prev
+        );
+      }
+    } catch (e) {
+      if (e instanceof ApiError) {
+        const code = (e.data as { code?: string } | null)?.code;
+        // M_003: already accepted — flip UI to 진행중, user can continue.
+        if (code === "M_003" || e.status === 400) {
+          setDetail((prev) => (prev ? { ...prev, status: "IN_PROGRESS" } : prev));
+          setError("이미 시작된 미션이에요. 목록에서 상세를 확인해주세요.");
+          return;
+        }
+        // M_001: recommendation expired/consumed — push back to list.
+        if (code === "M_001" || e.status === 404) {
+          setError("추천 미션이 만료되었어요. 목록으로 돌아갈게요.");
+          setTimeout(() => navigate("/app/missions", { replace: true }), 1200);
+          return;
+        }
+        setError(e.message);
+        return;
+      }
+      setError("미션을 시작하지 못했어요");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const status = (detail?.status || "").toUpperCase();
+  const isReady = status === "READY" || status === "NOT_STARTED" || status === "";
+  const isInProgress = status === "IN_PROGRESS" || status === "STARTED";
+  const isCompleted = status === "COMPLETED" || status === "SUCCESS";
+  const isFailed = status === "FAILED";
 
   return (
     <div className="pb-36 bg-[#F5F5F5] min-h-full">
@@ -107,95 +195,143 @@ export default function MissionDetailPage() {
         <div className="w-[30px]" />
       </div>
 
-      {/* Mission Hero */}
-      <div
-        className="mx-4 mt-4 rounded-2xl overflow-hidden shadow-[0_6px_20px_rgba(249,115,22,0.3)]"
-        style={{ background: "linear-gradient(135deg, #FB923C 0%, #F97316 50%, #EA580C 100%)" }}
-      >
-        <div className="p-6 flex flex-col items-center text-center relative overflow-hidden">
-          {/* Decorative circles */}
-          <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
-          <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/8" />
+      {loading && (
+        <div className="py-16 text-center text-[14px] text-[#8E8E93]">불러오는 중...</div>
+      )}
+      {error && !loading && (
+        <div className="mx-4 mt-6 p-4 rounded-xl bg-[#FEF2F2] text-[#B91C1C] text-[13px]">{error}</div>
+      )}
 
-
-          <h3 className="text-[22px] font-bold text-white mb-2 relative z-10">{mission.title}</h3>
-          <p className="text-[14px] text-white/80 leading-relaxed relative z-10">{mission.description}</p>
-
-          {/* Reward badge */}
-          <div className="mt-4 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 relative z-10">
-            <span className="text-[13px] font-bold text-white">+5P 달성 보상</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Psychology Section */}
-      <div className="mx-4 mt-5 bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
-          <div className="w-8 h-8 rounded-xl bg-[#F3E8FF] flex items-center justify-center">
-            <Brain size={16} className="text-[#8B5CF6]" />
-          </div>
-          <h4 className="text-[15px] font-bold text-[#1A1A2E]">{mission.whyTitle}</h4>
-        </div>
-        <div className="px-5 pb-5 space-y-2.5">
-          {mission.whyLines.map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 + i * 0.07 }}
-              className="flex items-start gap-3 p-3.5 bg-[#F5F3FF] rounded-xl"
-            >
-              <span className="text-[#8B5CF6] font-bold text-[13px] shrink-0 mt-0.5">{i + 1}</span>
-              <p className="text-[13px] text-[#4C1D95] leading-relaxed">{line}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Math Section */}
-      <div className="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
-        <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
-          <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] flex items-center justify-center">
-            <Calculator size={16} className="text-[#3B82F6]" />
-          </div>
-          <h4 className="text-[15px] font-bold text-[#1A1A2E]">{mission.mathTitle}</h4>
-        </div>
-        <div className="px-5 pb-5 space-y-2.5">
-          {mission.mathLines.map((line, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 + i * 0.07 }}
-              className="flex items-start gap-3 p-3.5 bg-[#EFF6FF] rounded-xl"
-            >
-              <span className="text-[#3B82F6] font-bold text-[13px] shrink-0 mt-0.5">{i + 1}</span>
-              <p className="text-[13px] text-[#1E40AF] leading-relaxed">{line}</p>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Sticky CTA */}
-      <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 pb-6 pt-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-20">
-        {started ? (
-          <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC]">
-            <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
-              <path d="M2 8L7.5 13.5L18 2" stroke="#00D26A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <span className="text-[15px] font-bold text-[#16A34A]">미션 진행 중!</span>
-          </div>
-        ) : (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setStarted(true)}
-            className="w-full py-4 rounded-2xl text-white text-[16px] font-bold shadow-[0_4px_16px_rgba(0,210,106,0.35)]"
-            style={{ background: "linear-gradient(135deg, #00D26A, #00A854)" }}
+      {detail && !loading && (
+        <>
+          {/* Mission Hero */}
+          <div
+            className="mx-4 mt-4 rounded-2xl overflow-hidden shadow-[0_6px_20px_rgba(249,115,22,0.3)]"
+            style={{ background: "linear-gradient(135deg, #FB923C 0%, #F97316 50%, #EA580C 100%)" }}
           >
-            미션 시작하기
-          </motion.button>
-        )}
-      </div>
+            <div className="p-6 flex flex-col items-center text-center relative overflow-hidden">
+              <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-white/10" />
+              <div className="absolute -bottom-6 -left-6 w-24 h-24 rounded-full bg-white/8" />
+
+              <div className="text-[48px] mb-2 relative z-10">{iconEmoji(detail.iconType)}</div>
+              <h3 className="text-[22px] font-bold text-white mb-2 relative z-10">{detail.title}</h3>
+              <p className="text-[14px] text-white/80 leading-relaxed relative z-10 whitespace-pre-line">
+                {detail.description}
+              </p>
+
+              <div className="mt-4 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full flex items-center gap-2 relative z-10">
+                <span className="text-[13px] font-bold text-white">
+                  +{detail.rewardPoint}P 달성 보상 · 실패 시 -{detail.failPenaltyPoint}P
+                </span>
+              </div>
+              {detail.expectedSavingAmount > 0 && (
+                <div className="mt-2 text-[12px] text-white/80 relative z-10">
+                  예상 절약 금액 {detail.expectedSavingAmount.toLocaleString("ko-KR")}원
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Psychology Section */}
+          <div className="mx-4 mt-5 bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
+              <div className="w-8 h-8 rounded-xl bg-[#F3E8FF] flex items-center justify-center">
+                <Brain size={16} className="text-[#8B5CF6]" />
+              </div>
+              <h4 className="text-[15px] font-bold text-[#1A1A2E]">행동학에서는..</h4>
+            </div>
+            <div className="px-5 pb-5 space-y-2.5">
+              {detail.behaviorInsights.length > 0 ? (
+                detail.behaviorInsights.map((line, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.1 + i * 0.07 }}
+                    className="flex items-start gap-3 p-3.5 bg-[#F5F3FF] rounded-xl"
+                  >
+                    <span className="text-[#8B5CF6] font-bold text-[13px] shrink-0 mt-0.5">{i + 1}</span>
+                    <p className="text-[13px] text-[#4C1D95] leading-relaxed">{line}</p>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="p-3.5 bg-[#F5F3FF] rounded-xl text-[12px] text-[#6D28D9] leading-relaxed text-center">
+                  미션을 시작하면 행동학적 분석을 볼 수 있어요
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Math Section */}
+          <div className="mx-4 mt-4 bg-white rounded-2xl overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.05)]">
+            <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
+              <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] flex items-center justify-center">
+                <Calculator size={16} className="text-[#3B82F6]" />
+              </div>
+              <h4 className="text-[15px] font-bold text-[#1A1A2E]">더 자세히 알아볼까요?</h4>
+            </div>
+            <div className="px-5 pb-5 space-y-2.5">
+              {detail.statisticalReasons.length > 0 ? (
+                detail.statisticalReasons.map((line, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, x: -8 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 + i * 0.07 }}
+                    className="flex items-start gap-3 p-3.5 bg-[#EFF6FF] rounded-xl"
+                  >
+                    <span className="text-[#3B82F6] font-bold text-[13px] shrink-0 mt-0.5">{i + 1}</span>
+                    <p className="text-[13px] text-[#1E40AF] leading-relaxed">{line}</p>
+                  </motion.div>
+                ))
+              ) : (
+                <div className="p-3.5 bg-[#EFF6FF] rounded-xl text-[12px] text-[#1D4ED8] leading-relaxed text-center">
+                  미션을 시작하면 통계 분석을 볼 수 있어요
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sticky CTA */}
+          <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[480px] px-4 pb-6 pt-4 bg-white/95 backdrop-blur-xl border-t border-gray-100 z-20">
+            {isInProgress && (
+              <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC]">
+                <svg width="20" height="16" viewBox="0 0 20 16" fill="none">
+                  <path
+                    d="M2 8L7.5 13.5L18 2"
+                    stroke="#00D26A"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span className="text-[15px] font-bold text-[#16A34A]">미션 진행 중!</span>
+              </div>
+            )}
+            {isCompleted && (
+              <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#F0FDF4] border border-[#86EFAC]">
+                <span className="text-[15px] font-bold text-[#16A34A]">미션 성공 🎉</span>
+              </div>
+            )}
+            {isFailed && (
+              <div className="flex items-center justify-center gap-2 py-4 rounded-2xl bg-[#FEF2F2] border border-[#FCA5A5]">
+                <span className="text-[15px] font-bold text-[#B91C1C]">미션 실패</span>
+              </div>
+            )}
+            {isReady && isRecommendation && recommendationId && (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleStart}
+                disabled={starting}
+                className="w-full py-4 rounded-2xl text-white text-[16px] font-bold shadow-[0_4px_16px_rgba(0,210,106,0.35)] disabled:opacity-70"
+                style={{ background: "linear-gradient(135deg, #00D26A, #00A854)" }}
+              >
+                {starting ? "시작하는 중..." : "미션 진행"}
+              </motion.button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

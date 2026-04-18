@@ -1,15 +1,57 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, User, Calendar, Hash } from "lucide-react";
+import { authApi } from "../lib/services";
+import { ApiError } from "../lib/api";
+
+function toIsoBirth(input: string): string | null {
+  const cleaned = input.replace(/[^0-9]/g, "");
+  if (cleaned.length !== 8) return null;
+  const y = cleaned.slice(0, 4);
+  const m = cleaned.slice(4, 6);
+  const d = cleaned.slice(6, 8);
+  const iso = `${y}-${m}-${d}`;
+  const dt = new Date(iso);
+  if (Number.isNaN(dt.getTime())) return null;
+  return iso;
+}
 
 export default function SignUpPage() {
   const navigate = useNavigate();
   const [showPw, setShowPw] = useState(false);
   const [form, setForm] = useState({ loginId: "", email: "", password: "", passwordConfirm: "", nickname: "", birth: "" });
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isValid = form.loginId && form.email && form.password.length >= 8 && form.password === form.passwordConfirm && form.nickname && form.birth;
 
   const update = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
+
+  const handleSubmit = async () => {
+    if (!isValid || submitting) return;
+    const birthDate = toIsoBirth(form.birth);
+    if (!birthDate) {
+      setError("생년월일 형식이 올바르지 않아요 (YYYY.MM.DD)");
+      return;
+    }
+    setSubmitting(true);
+    setError(null);
+    try {
+      await authApi.signup({
+        loginId: form.loginId,
+        password: form.password,
+        email: form.email,
+        nickname: form.nickname,
+        birthDate,
+      });
+      navigate("/bank");
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "회원가입에 실패했습니다";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const inputClass =
     "w-full h-[52px] rounded-xl border border-[#E5E5EA] px-4 pl-11 text-[15px] outline-none focus:border-[#007AFF] transition-colors bg-white";
@@ -66,14 +108,15 @@ export default function SignUpPage() {
       </div>
 
       <div className="px-6 pb-8 pt-4">
+        {error && <p className="text-[13px] text-[#FF3B30] mb-2">{error}</p>}
         <button
-          onClick={() => isValid && navigate("/bank")}
-          disabled={!isValid}
+          onClick={handleSubmit}
+          disabled={!isValid || submitting}
           className={`w-full h-[52px] rounded-xl text-[16px] text-white transition-colors ${
-            isValid ? "bg-[#00D26A] hover:bg-[#00b85c]" : "bg-[#D1D1D6]"
+            isValid && !submitting ? "bg-[#00D26A] hover:bg-[#00b85c]" : "bg-[#D1D1D6]"
           }`}
         >
-          다음
+          {submitting ? "가입 중..." : "다음"}
         </button>
       </div>
     </div>

@@ -2,9 +2,46 @@ import { ChevronRight } from "lucide-react";
 import { useNavigate } from "react-router";
 import characterImg from "../../imports/character.png";
 import { motion } from "motion/react";
+import { useEffect, useState } from "react";
+import { homeApi, analysisApi } from "../lib/services";
+import type {
+  HomeRankingPercentileResponse,
+  HomeSummaryResponse,
+  SpendingTopResponse,
+} from "../lib/types";
+import { tierConfig, tierIdFromBe } from "../constants/tierConfig";
+import { formatKrw, formatPoint } from "../lib/format";
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const [summary, setSummary] = useState<HomeSummaryResponse | null>(null);
+  const [percentile, setPercentile] = useState<HomeRankingPercentileResponse | null>(null);
+  const [top, setTop] = useState<SpendingTopResponse | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const results = await Promise.allSettled([
+        homeApi.summary(),
+        homeApi.percentile(),
+        analysisApi.topSpending(3),
+      ]);
+      if (cancelled) return;
+      if (results[0].status === "fulfilled") setSummary(results[0].value);
+      if (results[1].status === "fulfilled") setPercentile(results[1].value);
+      if (results[2].status === "fulfilled") setTop(results[2].value);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const tierInfo = summary?.tier ? tierConfig[tierIdFromBe(summary.tier)] : null;
+  const characterImgUrl = summary?.currentImageUrl || characterImg;
+  const characterName = summary?.currentImageName || "나의 캐릭터";
+  const rankPercent = percentile?.rankingPercentile ?? "--";
+  const measuredAt = percentile?.measuredAt ?? "";
+  const initial = characterName.charAt(0) || "또";
 
   return (
     <div className="pb-4 bg-[#F5F5F5]">
@@ -17,7 +54,7 @@ export default function HomePage() {
         />
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D26A] to-[#1B4965] flex items-center justify-center text-white text-[12px] font-bold shadow-sm">
-            또
+            {initial}
           </div>
         </div>
       </div>
@@ -37,10 +74,12 @@ export default function HomePage() {
               <span
                 className="text-[22px] font-bold text-[#2E7D32]"
               >
-                43.9%
+                {rankPercent}{typeof rankPercent === "string" && rankPercent.includes("%") ? "" : "%"}
               </span>
             </p>
-            <p className="text-[12px] text-[#8E8E93] mt-0.5">2026-04-10 측정 결과</p>
+            <p className="text-[12px] text-[#8E8E93] mt-0.5">
+              {measuredAt ? `${measuredAt} 측정 결과` : "측정 결과를 불러오고 있어요"}
+            </p>
           </div>
           <ChevronRight size={20} className="text-[#C7C7CC]" />
         </div>
@@ -65,7 +104,7 @@ export default function HomePage() {
             style={{ background: "radial-gradient(circle, rgba(0,210,106,0.12) 0%, transparent 70%)" }}
           />
           <motion.img
-            src={characterImg}
+            src={characterImgUrl}
             alt="캐릭터"
             className="w-[180px] h-[180px] object-contain mb-2 relative z-10 drop-shadow-2xl"
             animate={{ y: [0, -8, 0] }}
@@ -75,11 +114,15 @@ export default function HomePage() {
 
         <div className="px-5 pb-5">
           <div className="flex items-center gap-2 mb-1 mt-3">
-            <img src="/images/2-League-Analyst.png" alt="분석가 리그" className="w-[22px] h-[22px] object-contain shrink-0" />
-            <span className="text-[12px] text-[#3B82F6] font-semibold">분석 입문자 · 1,850P</span>
+            {tierInfo && (
+              <img src={tierInfo.image} alt={tierInfo.leagueName} className="w-[22px] h-[22px] object-contain shrink-0" />
+            )}
+            <span className="text-[12px] font-semibold" style={{ color: tierInfo?.color || "#3B82F6" }}>
+              {tierInfo?.name ?? summary?.tier ?? "--"} · {formatPoint(summary?.point)}
+            </span>
             <ChevronRight size={14} className="text-[#C7C7CC]" />
           </div>
-          <p className="text-[20px] font-bold text-[#1A1A2E] mb-2">나의 절약 요정</p>
+          <p className="text-[20px] font-bold text-[#1A1A2E] mb-2">{characterName}</p>
           <motion.button
             whileTap={{ scale: 0.97 }}
             className="w-full mt-4 py-3.5 rounded-xl text-white text-[15px] font-semibold shadow-[0_4px_12px_rgba(0,210,106,0.35)]"
@@ -97,11 +140,7 @@ export default function HomePage() {
           <p className="text-[16px] font-bold text-[#1A1A2E]">지난 달 소비 Top 3</p>
           <ChevronRight size={20} className="text-[#C7C7CC] cursor-pointer" onClick={() => navigate("/app/analysis")} />
         </div>
-        {[
-          { rank: 1, emoji: "☕", category: "카페·음료", amount: "127,400원" },
-          { rank: 2, emoji: "🍔", category: "배달·외식", amount: "98,200원" },
-          { rank: 3, emoji: "🛒", category: "온라인 쇼핑", amount: "85,600원" },
-        ].map((item) => (
+        {(top?.items ?? []).slice(0, 3).map((item) => (
           <div
             key={item.rank}
             className="flex items-center gap-3 py-3 border-t border-gray-50 first:border-t-0 first:pt-0"
@@ -115,9 +154,12 @@ export default function HomePage() {
             <div className="flex-1">
               <p className="text-[15px] font-medium text-[#1A1A2E]">{item.category}</p>
             </div>
-            <span className="text-[15px] font-semibold text-[#1A1A2E]">{item.amount}</span>
+            <span className="text-[15px] font-semibold text-[#1A1A2E]">{formatKrw(item.amount)}</span>
           </div>
         ))}
+        {top && top.items.length === 0 && (
+          <p className="text-center text-[13px] text-[#8E8E93] py-4">아직 집계된 소비가 없어요</p>
+        )}
       </div>
     </div>
   );

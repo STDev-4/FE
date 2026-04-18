@@ -31,6 +31,12 @@ export default defineConfig({
     },
   },
 
+  // Fixed port to match BE CORS whitelist (localhost:5173)
+  server: {
+    port: 5173,
+    strictPort: true,
+  },
+
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
 })

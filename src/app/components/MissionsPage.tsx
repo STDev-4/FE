@@ -1,60 +1,86 @@
 import { CheckCircle2, Clock, Star, XCircle, TrendingUp, ChevronRight } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate } from "react-router";
 import { motion } from "motion/react";
-import { tierConfig, type TierId } from "../constants/tierConfig";
+import { tierConfig, tierIdFromBe } from "../constants/tierConfig";
+import { missionsApi, tierApi } from "../lib/services";
+import type {
+  MissionStatusCardResponse,
+  RecommendedMissionResponse,
+  TierMeResponse,
+  TodayMissionResponse,
+} from "../lib/types";
+import { formatPoint } from "../lib/format";
 
 type MissionStatus = "completed" | "in-progress" | "failed" | "ready";
 
 interface Mission {
   id: string;
+  numericId?: number;
+  recommendationId?: string;
   title: string;
   emoji: string;
   reward: number;
   status: MissionStatus;
   tierNote?: string;
+  // Route-state payload passed to MissionDetailPage for recommendations
+  raw?: RecommendedMissionResponse;
 }
 
-const baseMissions: Mission[] = [
-  {
-    id: "s1",
-    title: "카페 안 가기",
-    emoji: "☕",
-    reward: 5,
-    status: "in-progress",
-    tierNote: "성공 시 +5P 획득",
-  },
-  {
-    id: "s2",
-    title: "배달 1회 줄이기",
-    emoji: "🍕",
-    reward: 8,
-    status: "in-progress",
-    tierNote: "성공 시 +8P 획득",
-  },
-];
+const ICON_EMOJI: Record<string, string> = {
+  CAFE: "☕",
+  COFFEE: "☕",
+  DELIVERY: "🍔",
+  FOOD: "🍱",
+  SHOPPING: "🛍️",
+  CONVENIENCE: "🏪",
+  TRANSPORT: "🚌",
+  LEISURE: "🎬",
+  BEAUTY: "💄",
+  DEFAULT: "🎯",
+};
+const iconEmoji = (type?: string) => (type && ICON_EMOJI[type.toUpperCase()]) || ICON_EMOJI.DEFAULT;
 
-function useCountdownToMidnight() {
-  const [timeLeft, setTimeLeft] = useState("");
+const mapStatus = (s: string | undefined): MissionStatus => {
+  switch ((s || "").toUpperCase()) {
+    case "COMPLETED":
+    case "SUCCESS":
+      return "completed";
+    case "FAILED":
+      return "failed";
+    case "IN_PROGRESS":
+    case "STARTED":
+      return "in-progress";
+    default:
+      return "ready";
+  }
+};
+
+function useRemainingCountdown(initial: string | null, targetIso: string | null) {
+  const [display, setDisplay] = useState(initial || "--:--:--");
   useEffect(() => {
-    const update = () => {
-      const now = new Date();
-      const target = new Date(now);
-      target.setHours(5, 0, 0, 0);
-      if (target <= now) target.setDate(target.getDate() + 1);
-      const diff = target.getTime() - now.getTime();
+    if (!targetIso) {
+      if (initial) setDisplay(initial);
+      return;
+    }
+    const tick = () => {
+      const diff = new Date(targetIso).getTime() - Date.now();
+      if (Number.isNaN(diff) || diff <= 0) {
+        setDisplay("00:00:00");
+        return;
+      }
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setTimeLeft(
+      setDisplay(
         `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`
       );
     };
-    update();
-    const id = setInterval(update, 1000);
+    tick();
+    const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
-  return timeLeft;
+  }, [initial, targetIso]);
+  return display;
 }
 
 const statusAccent: Record<MissionStatus, string> = {
@@ -97,14 +123,22 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
   const navigate = useNavigate();
   const isFailed = mission.status === "failed";
   const isCompleted = mission.status === "completed";
-  const accent = statusAccent[mission.status];
+  void statusAccent;
 
   return (
     <motion.button
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06 }}
-      onClick={() => navigate(`/app/mission/${mission.id}`)}
+      onClick={() => {
+        if (mission.recommendationId) {
+          navigate(`/app/mission/rec-${mission.recommendationId}`, {
+            state: { recommendation: mission.raw },
+          });
+        } else {
+          navigate(`/app/mission/${mission.numericId ?? mission.id}`);
+        }
+      }}
       className="w-full text-left rounded-2xl overflow-hidden flex items-center gap-3 transition-all bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] active:scale-[0.98]"
       style={{
         opacity: isFailed ? 0.75 : 1,
@@ -113,6 +147,7 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
       <div className="flex items-center gap-3 flex-1 p-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-[20px]">{mission.emoji}</span>
             <span
               className={`text-[17px] font-semibold ${
                 isFailed ? "text-[#9CA3AF] line-through" : "text-[#1A1A2E]"
@@ -145,24 +180,119 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
   );
 }
 
+// BE returns [] for recommended when a concurrent GPT generation is in flight; poll until populated.
+const RECOMMENDED_MAX_RETRIES = 8;
+const RECOMMENDED_RETRY_DELAY_MS = 3000;
+
 export default function MissionsPage() {
-  const currentTierId: TierId = "analyst";
-  const tier = tierConfig[currentTierId];
-  const countdown = useCountdownToMidnight();
-  const location = useLocation();
-  const [missions, setMissions] = useState<Mission[]>(baseMissions);
+  const [tierMe, setTierMe] = useState<TierMeResponse | null>(null);
+  const [statusCard, setStatusCard] = useState<MissionStatusCardResponse | null>(null);
+  const [today, setToday] = useState<TodayMissionResponse[] | null>(null);
+  const [recommended, setRecommended] = useState<RecommendedMissionResponse[] | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [recommendedLoading, setRecommendedLoading] = useState(false);
 
   useEffect(() => {
-    const incoming = (location.state as { addMission?: Mission } | null)?.addMission;
-    if (!incoming) return;
-    setMissions((prev) =>
-      prev.find((m) => m.id === incoming.id) ? prev : [...prev, incoming]
-    );
-  }, [location.state]);
+    let cancelled = false;
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, ms);
+      });
 
-  const completedToday = missions.filter((m) => m.status === "completed").length;
-  const totalToday = missions.length;
-  const progress = totalToday > 0 ? completedToday / totalToday : 0;
+    (async () => {
+      setLoading(true);
+      const [tierRes, statusRes, todayRes] = await Promise.allSettled([
+        tierApi.me(),
+        missionsApi.statusCard(),
+        missionsApi.today(),
+      ]);
+      if (cancelled) return;
+      if (tierRes.status === "fulfilled") setTierMe(tierRes.value);
+      if (statusRes.status === "fulfilled") setStatusCard(statusRes.value);
+      if (todayRes.status === "fulfilled") setToday(todayRes.value);
+      setLoading(false);
+
+      // Recommended missions are generated lazily on BE (GPT). First call may return [] while
+      // another request holds the lock — retry a few times until populated.
+      setRecommendedLoading(true);
+      for (let attempt = 0; attempt < RECOMMENDED_MAX_RETRIES; attempt++) {
+        try {
+          const list = await missionsApi.recommended();
+          if (cancelled) return;
+          console.log(`[missions] recommended attempt ${attempt + 1}: ${list.length} items`);
+          if (list.length > 0) {
+            setRecommended(list);
+            break;
+          }
+          setRecommended(list);
+        } catch (e) {
+          console.warn(`[missions] recommended attempt ${attempt + 1} error`, e);
+        }
+        if (attempt < RECOMMENDED_MAX_RETRIES - 1) {
+          await sleep(RECOMMENDED_RETRY_DELAY_MS);
+          if (cancelled) return;
+        }
+      }
+      if (!cancelled) setRecommendedLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const todayMissions: Mission[] = useMemo(
+    () =>
+      (today ?? []).map((m) => ({
+        id: String(m.missionId),
+        numericId: m.missionId,
+        title: m.title,
+        emoji: iconEmoji(m.iconType),
+        reward: m.rewardPoint,
+        status: mapStatus(m.status),
+        tierNote: `성공 시 +${m.rewardPoint}P / 실패 시 -${m.failPenaltyPoint}P`,
+      })),
+    [today]
+  );
+
+  // BE removes a recommendation from cache once accepted, so `recommended` naturally
+  // reflects the currently-available pool. No extra dedup against today list is required.
+  const readyMissions: Mission[] = useMemo(
+    () =>
+      (recommended ?? []).map((r) => ({
+        id: r.recommendationId,
+        recommendationId: r.recommendationId,
+        title: r.title,
+        emoji: iconEmoji(r.iconType),
+        reward: r.rewardPoint,
+        status: "ready" as MissionStatus,
+        tierNote: `성공 시 +${r.rewardPoint}P / 실패 시 -${r.failPenaltyPoint}P`,
+        raw: r,
+      })),
+    [recommended]
+  );
+
+  const tierId = tierIdFromBe(tierMe?.tier);
+  const tier = tierConfig[tierId];
+
+  // "진행중인 미션 현황"
+  // - 분자: 진행중 미션 개수
+  // - 분모: 추천 미션 + 진행중 미션 (FE 에서 계산; BE 의 todayMissionTotalCount 는 완료/실패 포함이라 여기서는 미사용)
+  const inProgressCount = todayMissions.filter((m) => m.status === "in-progress").length;
+  const recommendedCount = readyMissions.length;
+  const totalToday = inProgressCount + recommendedCount;
+  const progress = totalToday > 0 ? inProgressCount / totalToday : 0;
+
+  const firstInProgressAt = useMemo(
+    () => (today ?? []).find((m) => mapStatus(m.status) === "in-progress")?.autoEvaluateAt ?? null,
+    [today]
+  );
+  const countdown = useRemainingCountdown(
+    statusCard?.autoEvaluateRemainingTime ?? null,
+    firstInProgressAt
+  );
+
+  const totalPoint = statusCard?.totalPoint ?? tierMe?.point ?? 0;
+  const pointToNext = statusCard?.pointToNextTier ?? 0;
 
   return (
     <div className="pb-28 bg-[#F5F5F5] min-h-full">
@@ -184,12 +314,12 @@ export default function MissionsPage() {
             <div className="flex items-center gap-2 mb-1.5">
               <span className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
                 <img src={tier.image} alt={tier.leagueName} className="w-5 h-5 object-contain" />
-                {tier.name}
+                {tierMe?.tierLabel || tier.name}
               </span>
             </div>
             <p className="text-white/75 text-[13px] mt-1">진행중인 미션 현황</p>
             <p className="text-white text-[32px] font-bold mt-0.5 leading-none">
-              {completedToday}
+              {inProgressCount}
               <span className="text-[18px] text-white/60 font-normal"> / {totalToday}</span>
             </p>
           </div>
@@ -228,25 +358,78 @@ export default function MissionsPage() {
         <div className="px-5 pb-4 flex gap-5">
           <div className="flex items-center gap-1.5">
             <Star size={13} className="text-[#FDE68A]" fill="#FDE68A" />
-            <span className="text-white/85 text-[12px] font-medium">누적 1,850P</span>
+            <span className="text-white/85 text-[12px] font-medium">누적 {formatPoint(totalPoint)}</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <TrendingUp size={13} className="text-[#FDE68A]" />
-            <span className="text-white/85 text-[12px] font-medium">다음 티어까지 1,150P</span>
-          </div>
+          {pointToNext > 0 && (
+            <div className="flex items-center gap-1.5">
+              <TrendingUp size={13} className="text-[#FDE68A]" />
+              <span className="text-white/85 text-[12px] font-medium">
+                다음 티어까지 {formatPoint(pointToNext)}
+              </span>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Today Missions */}
-      <div className="mx-4 mb-3">
-        <p className="text-[16px] font-bold text-[#1A1A2E]">오늘의 미션</p>
-        <p className="text-[12px] text-[#8E8E93] mt-0.5 font-medium">미션을 완료해 포인트를 모으세요</p>
+      {/* Section: 진행중인 미션 (진행중 / 완료 / 실패) */}
+      <div className="mx-4 mb-3 mt-2">
+        <p className="text-[16px] font-bold text-[#1A1A2E]">진행중인 미션</p>
+        <p className="text-[12px] text-[#8E8E93] mt-0.5 font-medium">
+          미션을 완료해 포인트를 모으세요
+        </p>
       </div>
       <div className="mx-4 flex flex-col gap-3">
-        {missions.map((m, i) => (
+        {loading && (
+          <div className="py-8 text-center text-[13px] text-[#8E8E93]">불러오는 중...</div>
+        )}
+        {!loading && todayMissions.length === 0 && (
+          <div className="py-6 text-center text-[13px] text-[#8E8E93]">
+            진행 중인 미션이 없어요
+          </div>
+        )}
+        {todayMissions.map((m, i) => (
           <MissionCard key={m.id} mission={m} index={i} />
         ))}
       </div>
+
+      {/* Section: 추천 미션 (아직 시작하지 않은 것) */}
+      {(readyMissions.length > 0 || recommendedLoading) && (
+        <>
+          <div className="mx-4 mb-3 mt-6">
+            <p className="text-[16px] font-bold text-[#1A1A2E]">추천 미션</p>
+            <p className="text-[12px] text-[#8E8E93] mt-0.5 font-medium">
+              탭해서 상세 확인 후 시작할 수 있어요
+            </p>
+          </div>
+          <div className="mx-4 flex flex-col gap-3">
+            {readyMissions.map((m, i) => (
+              <MissionCard key={m.id} mission={m} index={i} />
+            ))}
+            {recommendedLoading && (
+              <div className="py-3 text-center text-[12px] text-[#8E8E93]">
+                맞춤 미션을 준비하고 있어요...
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Both empty after loading completes: show hint to retry */}
+      {!loading && !recommendedLoading && todayMissions.length === 0 && readyMissions.length === 0 && (
+        <div className="mx-4 mt-6 p-4 rounded-xl bg-white text-center shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+          <p className="text-[13px] text-[#8E8E93] mb-3">
+            맞춤 미션 준비가 지연되고 있어요.
+            <br />
+            잠시 후 새로고침해주세요.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="text-[13px] font-semibold text-[#00D26A] px-4 py-2 rounded-lg bg-[#F0FDF4]"
+          >
+            새로고침
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,13 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { ArrowLeft, Check, User, Lock } from "lucide-react";
+import { codefApi } from "../lib/services";
+import { ApiError, isAuthenticated } from "../lib/api";
+import type { InstitutionType } from "../lib/types";
 
-const banks = [
-  { id: "kb", name: "국민카드", logo: "/images/kukmin.png", imgClass: "scale-[2.2]" },
-  { id: "shinhan", name: "신한카드", logo: "/images/shinhan.png", imgClass: "scale-100" },
-  { id: "hana", name: "하나카드", logo: "/images/hana.png", imgClass: "scale-[1.3]" },
-  { id: "nh", name: "농협카드", logo: "/images/nonghyup.png", imgClass: "scale-[2.5]" },
-  { id: "ibk", name: "기업카드", logo: "/images/ibk.png", imgClass: "scale-100" },
+const banks: { id: string; institutionType: InstitutionType; name: string; logo: string; imgClass: string }[] = [
+  { id: "kb", institutionType: "CARD_KB", name: "국민카드", logo: "/images/kukmin.png", imgClass: "scale-[2.2]" },
+  { id: "shinhan", institutionType: "CARD_SHINHAN", name: "신한카드", logo: "/images/shinhan.png", imgClass: "scale-100" },
+  { id: "hana", institutionType: "CARD_HANA", name: "하나카드", logo: "/images/hana.png", imgClass: "scale-[1.3]" },
+  { id: "nh", institutionType: "CARD_NH", name: "농협카드", logo: "/images/nonghyup.png", imgClass: "scale-[2.5]" },
+  { id: "ibk", institutionType: "BANK_IBK", name: "기업은행", logo: "/images/ibk.png", imgClass: "scale-100" },
 ];
 
 export default function BankConnectionPage() {
@@ -15,8 +18,44 @@ export default function BankConnectionPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [cardId, setCardId] = useState("");
   const [cardPw, setCardPw] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const isValid = selected && cardId && cardPw;
+
+  useEffect(() => {
+    if (!isAuthenticated()) {
+      navigate("/login", { replace: true });
+    }
+  }, [navigate]);
+
+  const handleLink = async () => {
+    if (!isValid || submitting) return;
+    if (!isAuthenticated()) {
+      setError("로그인 정보가 만료되었어요. 다시 로그인해 주세요.");
+      navigate("/login", { replace: true });
+      return;
+    }
+    const bank = banks.find((b) => b.id === selected);
+    if (!bank) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const result = await codefApi.link({
+        institutions: [{ institutionType: bank.institutionType, loginId: cardId, loginPassword: cardPw }],
+      });
+      if (!result.linked.includes(bank.institutionType)) {
+        setError("카드 연결에 실패했어요. 아이디/비밀번호를 확인해 주세요.");
+        return;
+      }
+      navigate("/loading");
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.message : "카드 연결 중 오류가 발생했어요";
+      setError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   const inputClass = "w-full h-[52px] rounded-xl border border-[#E5E5EA] px-4 pl-11 text-[15px] outline-none focus:border-[#00D26A] transition-colors bg-white";
 
   return (
@@ -91,13 +130,14 @@ export default function BankConnectionPage() {
       </div>
 
       <div className="px-6 pb-8 pt-4">
+        {error && <p className="text-[13px] text-[#FF3B30] mb-2">{error}</p>}
         <button
-          onClick={() => isValid && navigate("/loading")}
-          disabled={!isValid}
-          className={`w-full h-[52px] rounded-xl text-[16px] text-white transition-colors ${isValid ? "bg-[#00D26A] hover:bg-[#00b85c]" : "bg-[#D1D1D6]"
+          onClick={handleLink}
+          disabled={!isValid || submitting}
+          className={`w-full h-[52px] rounded-xl text-[16px] text-white transition-colors ${isValid && !submitting ? "bg-[#00D26A] hover:bg-[#00b85c]" : "bg-[#D1D1D6]"
             }`}
         >
-          연결하기
+          {submitting ? "연결 중..." : "연결하기"}
         </button>
       </div>
     </div>
