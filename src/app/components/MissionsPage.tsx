@@ -2,6 +2,7 @@ import { CheckCircle2, Clock, Star, XCircle, TrendingUp, ChevronRight } from "lu
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router";
 import { motion } from "motion/react";
+import { tierConfig, type TierId } from "../constants/tierConfig";
 
 type MissionStatus = "completed" | "in-progress" | "failed" | "ready";
 
@@ -106,7 +107,6 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
       onClick={() => navigate(`/app/mission/${mission.id}`)}
       className="w-full text-left rounded-2xl overflow-hidden flex items-center gap-3 transition-all bg-white shadow-[0_2px_10px_rgba(0,0,0,0.06)] active:scale-[0.98]"
       style={{
-        borderLeft: `4px solid ${accent}`,
         opacity: isFailed ? 0.75 : 1,
       }}
     >
@@ -152,6 +152,8 @@ function MissionCard({ mission, index }: { mission: Mission; index: number }) {
 }
 
 export default function MissionsPage() {
+  const currentTierId: TierId = "analyst";
+  const tier = tierConfig[currentTierId];
   const countdown = useCountdownToMidnight();
   const location = useLocation();
   const [missions, setMissions] = useState<Mission[]>(baseMissions);
@@ -177,18 +179,21 @@ export default function MissionsPage() {
 
       {/* Status strip */}
       <div
-        className="mx-4 mt-4 mb-4 rounded-2xl overflow-hidden shadow-[0_4px_16px_rgba(37,99,235,0.25)]"
-        style={{ background: "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)" }}
+        className="mx-4 mt-4 mb-4 rounded-2xl overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${tier.gradient[0]} 0%, ${tier.gradient[1]} 100%)`,
+          boxShadow: `0 4px 16px ${tier.gradient[1]}66`,
+        }}
       >
         <div className="p-5 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1.5">
               <span className="flex items-center gap-1.5 text-[12px] font-bold text-white bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                <img src="/images/2-League-Analyst.png" alt="분석가 리그" className="w-5 h-5 object-contain" />
-                분석 입문자
+                <img src={tier.image} alt={tier.leagueName} className="w-5 h-5 object-contain" />
+                {tier.name}
               </span>
             </div>
-            <p className="text-white/75 text-[13px] mt-1">오늘의 미션 현황</p>
+            <p className="text-white/75 text-[13px] mt-1">진행중인 미션 현황</p>
             <p className="text-white text-[32px] font-bold mt-0.5 leading-none">
               {completedToday}
               <span className="text-[18px] text-white/60 font-normal"> / {totalToday}</span>
