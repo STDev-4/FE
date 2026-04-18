@@ -9,8 +9,12 @@ export default function HomePage() {
   return (
     <div className="pb-4 bg-[#F5F5F5]">
       {/* Top bar */}
-      <div className="flex items-center justify-between px-5 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
-        <span className="text-[#00D26A] text-[20px] font-bold tracking-tight">MyAsset</span>
+      <div className="flex items-center justify-between px-3 py-3 bg-white border-b border-gray-100 sticky top-0 z-20">
+        <img
+          src="/images/logo.png"
+          alt="로고"
+          className="h-[70px] object-contain -ml-3"
+        />
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#00D26A] to-[#1B4965] flex items-center justify-center text-white text-[12px] font-bold shadow-sm">
             또
@@ -21,7 +25,7 @@ export default function HomePage() {
       {/* Saving Rank Card */}
       <div className="mx-4 mt-4 rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.07)] p-5 cursor-pointer active:scale-[0.985] transition-transform" onClick={() => navigate("/app/tier")}>
         <div className="flex items-center gap-4 mb-4">
-          <div 
+          <div
             className="w-12 h-12 rounded-xl flex items-center justify-center shadow-sm relative"
             style={{ backgroundColor: "rgba(76, 175, 80, 0.12)" }}
           >
@@ -94,9 +98,9 @@ export default function HomePage() {
           <ChevronRight size={20} className="text-[#C7C7CC] cursor-pointer" onClick={() => navigate("/app/analysis")} />
         </div>
         {[
-          { rank: 1, emoji: "☕", category: "카페·음료",   amount: "127,400원" },
-          { rank: 2, emoji: "🍔", category: "배달·외식",   amount: "98,200원"  },
-          { rank: 3, emoji: "🛒", category: "온라인 쇼핑", amount: "85,600원"  },
+          { rank: 1, emoji: "☕", category: "카페·음료", amount: "127,400원" },
+          { rank: 2, emoji: "🍔", category: "배달·외식", amount: "98,200원" },
+          { rank: 3, emoji: "🛒", category: "온라인 쇼핑", amount: "85,600원" },
         ].map((item) => (
           <div
             key={item.rank}
