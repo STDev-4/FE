@@ -56,16 +56,20 @@ const mapStatus = (s: string | undefined): MissionStatus => {
   }
 };
 
-function useRemainingCountdown(initial: string | null, targetIso: string | null) {
-  const [display, setDisplay] = useState(initial || "--:--:--");
+function getNext0500(): Date {
+  const now = new Date();
+  const target = new Date(now);
+  target.setHours(5, 0, 0, 0);
+  if (now >= target) target.setDate(target.getDate() + 1);
+  return target;
+}
+
+function useRemainingCountdown() {
+  const [display, setDisplay] = useState("--:--:--");
   useEffect(() => {
-    if (!targetIso) {
-      if (initial) setDisplay(initial);
-      return;
-    }
     const tick = () => {
-      const diff = new Date(targetIso).getTime() - Date.now();
-      if (Number.isNaN(diff) || diff <= 0) {
+      const diff = getNext0500().getTime() - Date.now();
+      if (diff <= 0) {
         setDisplay("00:00:00");
         return;
       }
@@ -79,7 +83,7 @@ function useRemainingCountdown(initial: string | null, targetIso: string | null)
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, [initial, targetIso]);
+  }, []);
   return display;
 }
 
@@ -282,14 +286,7 @@ export default function MissionsPage() {
   const totalToday = inProgressCount + recommendedCount;
   const progress = totalToday > 0 ? inProgressCount / totalToday : 0;
 
-  const firstInProgressAt = useMemo(
-    () => (today ?? []).find((m) => mapStatus(m.status) === "in-progress")?.autoEvaluateAt ?? null,
-    [today]
-  );
-  const countdown = useRemainingCountdown(
-    statusCard?.autoEvaluateRemainingTime ?? null,
-    firstInProgressAt
-  );
+  const countdown = useRemainingCountdown();
 
   const totalPoint = statusCard?.totalPoint ?? tierMe?.point ?? 0;
   const pointToNext = statusCard?.pointToNextTier ?? 0;
