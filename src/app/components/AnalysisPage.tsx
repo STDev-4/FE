@@ -155,7 +155,8 @@ export default function AnalysisPage() {
           {(insights ?? []).map((item, idx) => {
             const id = String(item.insightId);
             const isOpen = expandedId === id;
-            const palette = COLOR_MAP[item.colorType] || COLOR_MAP.PRIMARY;
+            const PALETTE_ORDER = ["PRIMARY", "POSITIVE", "WARNING", "NEUTRAL"] as const;
+            const palette = COLOR_MAP[PALETTE_ORDER[idx % PALETTE_ORDER.length]];
             const Icon = INSIGHT_ICONS[idx % INSIGHT_ICONS.length];
             return (
               <div
