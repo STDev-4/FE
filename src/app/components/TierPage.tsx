@@ -123,10 +123,6 @@ export default function TierPage() {
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Header */}
-      <div className="px-5 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-        <h2 className="text-[18px] font-semibold text-[#1A1A2E] text-center">리그</h2>
-      </div>
 
       {/* Tier selector hero */}
       <div className="bg-white pt-7 pb-6 shadow-[0_2px_10px_rgba(0,0,0,0.06)]">

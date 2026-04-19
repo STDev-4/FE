@@ -296,10 +296,6 @@ export default function MissionsPage() {
 
   return (
     <div className="pb-28 bg-[#F5F5F5] min-h-full">
-      {/* Header */}
-      <div className="px-5 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-        <h2 className="text-[18px] font-semibold text-[#1A1A2E] text-center">미션</h2>
-      </div>
 
       {/* Status strip */}
       <div

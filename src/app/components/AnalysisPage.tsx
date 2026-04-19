@@ -62,10 +62,6 @@ export default function AnalysisPage() {
 
   return (
     <div className="pb-4 bg-[#F5F5F5] min-h-full">
-      {/* Header */}
-      <div className="px-5 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
-        <h2 className="text-[18px] font-semibold text-[#1A1A2E] text-center">분석</h2>
-      </div>
 
       {/* Section 1: 소비 패턴 */}
       <div className="px-4 pt-6 pb-1">
